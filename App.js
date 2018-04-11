@@ -19,13 +19,28 @@ const instructions = Platform.select({
     'Shake or press menu button for dev menu',
 });
 
-type Props = {};
-export default class App extends Component<Props> {
+export default class App extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      position: {},
+    };
+  }
+
+  componentDidMount() {
+    navigator.geolocation.watchPosition(position => {
+      this.setState({ position });
+    }, error => {
+      this.setState({ position: error });
+    });
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <Text style={styles.welcome}>
-          Welcome to React Native!
+          {JSON.stringify(this.state.position)}
         </Text>
         <Text style={styles.instructions}>
           To get started, edit App.js
