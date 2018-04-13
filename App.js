@@ -19,9 +19,8 @@ export default class App extends Component {
     super();
 
     this.state = {
-      coordinate: null,
-      region: null,
       distance: 0,
+      markers: [],
     };
   }
 
@@ -50,36 +49,35 @@ export default class App extends Component {
       this.longitude = longitude;
       this.latitude = latitude;
 
+      const centerMarker = {
+        longitude,
+        latitude,
+      };
+
+      const markers = [];
+
+      const westMarker = Object.assign({}, centerMarker, {
+        longitude: longitude - 0.001,
+      });
+      markers.push(westMarker);
+
+      const eastMarker = Object.assign({}, centerMarker, {
+        longitude: longitude + 0.001,
+      });
+      markers.push(eastMarker);
+
       this.setState({
-        coordinate: new AnimatedRegion({
-          longitude,
-          latitude,
-        }),
-        region: new AnimatedRegion({
-          longitude,
-          latitude,
-          longitudeDelta: 0.000421,
-          latitudeDelta: 0.000922,
-        }),
+        markers
       })
     });
     navigator.geolocation.watchPosition(position => {
       const { longitude, latitude } = position.coords;
-      if (!this.state.coordinate) return;
+
+      if (!this.longitude && !this.latitude) return;
 
       this.setState({
         distance: this.state.distance + this.getDistanceFromLatLonInKm(this.latitude, this.longitude, latitude, longitude),
       });
-
-      this.state.coordinate.timing({
-        longitude,
-        latitude,
-      }).start();
-
-      this.state.region.timing({
-        longitude,
-        latitude,
-      }).start();
     }, error => {
       console.log(error);
     }, { distanceFilter: 0.01 });
@@ -90,11 +88,15 @@ export default class App extends Component {
       <View style={styles.container}>
         <Animated
           style={styles.map}
-          region={this.state.region}>
-          <Marker.Animated
-            ref={marker => { this.marker = marker }}
-            coordinate={this.state.coordinate}
+          showsUserLocation
+          followsUserLocation
+        >
+        {this.state.markers.map(marker => (
+          <Marker
+            key={marker.longitude}
+            coordinate={marker}
           />
+        ))}
         </Animated>
         <View style={styles.welcome}>
           <Text>
